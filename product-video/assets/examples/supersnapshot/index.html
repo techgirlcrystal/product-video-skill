@@ -1,0 +1,405 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Super Snapshot AI overview</title>
+<link rel="stylesheet" href="assets/fonts.css">
+<style>
+:root{--acc:#8b5cf6;--acc2:#6d28d9;--acc3:#a78bfa;--ink:#14213d;--ink2:#4a5568;--line:#e2e6ef;--bg:#f6f7fb;--warn:#f59e0b;--warn-ink:#b45309;--bad:#ef4444;--dark:#0b0a17;}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:1920px;height:1080px;overflow:hidden;background:#000;font-family:Manrope,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+#stage{position:relative;width:1920px;height:1080px;overflow:hidden;background:var(--dark)}
+.scene{position:absolute;inset:0;opacity:0}
+.dark{background:radial-gradient(ellipse 60% 55% at 50% 50%, var(--glow, rgba(139,92,246,.28)), transparent 70%), var(--dark)}
+.dark::before{content:"";position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.035) 1px,transparent 1px);background-size:64px 64px;mask-image:radial-gradient(ellipse 70% 70% at 50% 50%,#000 30%,transparent 80%)}
+.light{background:var(--bg)}
+.light::before{content:"";position:absolute;inset:0;background-image:radial-gradient(rgba(20,33,61,.09) 1.2px,transparent 1.2px);background-size:28px 28px}
+.big{position:absolute;left:0;right:0;text-align:center;color:#fff;font-weight:800;letter-spacing:-.035em;line-height:1.02}
+.grad{background:linear-gradient(90deg,#a78bfa,#c4b5fd);-webkit-background-clip:text;background-clip:text;color:transparent}
+.hot{background:linear-gradient(90deg,#fb923c,#f97316);-webkit-background-clip:text;background-clip:text;color:transparent}
+.acc{color:var(--acc)}
+/* floating workflow cards */
+.fcard{position:absolute;width:380px;padding:18px 22px;border-radius:18px;background:rgba(28,26,48,.85);border:1px solid rgba(255,255,255,.07);color:#fff;display:flex;gap:16px;align-items:center;filter:blur(3px)}
+.fcard .ic{width:48px;height:48px;border-radius:12px;display:grid;place-items:center;font-size:24px;flex:none}
+.fcard .k{font-size:12px;letter-spacing:.14em;color:rgba(255,255,255,.4);font-weight:700}
+.fcard .n{font-size:19px;font-weight:700;margin-top:3px}
+.fcard .s{font-size:14px;color:rgba(255,255,255,.5);margin-top:2px}
+.badge{position:absolute;width:96px;height:96px;border-radius:50%;background:#ef5a3c;color:#fff;font-weight:800;font-size:34px;display:grid;place-items:center;box-shadow:0 0 0 10px rgba(239,90,60,.18),0 0 60px rgba(239,90,60,.6)}
+/* off cards */
+.ocard{position:absolute;width:640px;padding:28px 32px;border-radius:22px;background:rgba(30,28,52,.92);border:1px solid rgba(255,255,255,.09);color:#fff;display:flex;align-items:center;gap:22px;box-shadow:0 30px 80px rgba(0,0,0,.5)}
+.ocard .ic{width:64px;height:64px;border-radius:16px;background:rgba(139,92,246,.2);display:grid;place-items:center;font-size:30px}
+.ocard .n{font-size:28px;font-weight:800;letter-spacing:-.02em}
+.ocard .s{font-size:19px;color:rgba(255,255,255,.55);margin-top:4px}
+.ocard .pill{margin-left:auto;padding:8px 16px;border-radius:999px;font-weight:800;font-size:16px;letter-spacing:.08em}
+.pill-draft{background:rgba(245,158,11,.18);color:#fbbf24;border:1px solid rgba(245,158,11,.5)}
+.pill-paused{background:rgba(239,68,68,.16);color:#f87171;border:1px solid rgba(239,68,68,.5)}
+/* logo */
+.logo{position:absolute;display:flex;align-items:center;gap:28px;left:50%;transform:translateX(-50%)}
+.logo .tile{width:120px;height:120px;border-radius:30px;background:linear-gradient(135deg,#a78bfa,#7c3aed);display:grid;place-items:center;box-shadow:0 0 80px rgba(139,92,246,.7)}
+.logo .tile svg{width:64px;height:64px}
+.logo .word{font-size:92px;font-weight:800;letter-spacing:-.04em;color:#fff;white-space:nowrap}
+.logo .word span{color:#a78bfa}
+/* light split scenes */
+.left{position:absolute;left:130px;top:0;bottom:0;width:640px;display:flex;flex-direction:column;justify-content:center}
+.eyebrow{font-size:20px;letter-spacing:.2em;font-weight:800;color:var(--acc2);display:flex;align-items:center;gap:14px;margin-bottom:28px}
+.eyebrow::before{content:"";width:12px;height:12px;border-radius:50%;background:var(--acc);box-shadow:0 0 0 6px rgba(139,92,246,.18)}
+.h{font-size:92px;font-weight:800;letter-spacing:-.045em;line-height:1.0;color:var(--ink)}
+.h .acc{color:var(--acc)}
+.sub{font-size:27px;line-height:1.45;color:#6b7280;margin-top:34px;font-weight:500;max-width:600px}
+.card{position:absolute;background:#fff;border-radius:26px;box-shadow:0 40px 100px rgba(20,33,61,.14),0 2px 6px rgba(20,33,61,.06);border:1px solid var(--line);overflow:hidden}
+.card .hd{padding:26px 34px 18px;display:flex;align-items:center;gap:14px;border-bottom:1px solid var(--line)}
+.card .hd b{font-size:26px;color:var(--ink);letter-spacing:-.02em}
+.card .hd .tag{margin-left:auto;font-size:15px;font-weight:800;color:var(--acc2);background:#f3efff;padding:6px 14px;border-radius:999px}
+.dots{display:flex;gap:8px;margin-right:8px}.dots i{width:13px;height:13px;border-radius:50%;background:#e5e7eb;display:block}
+.chip{position:absolute;background:#fff;border-radius:18px;padding:16px 22px;box-shadow:0 20px 50px rgba(20,33,61,.16);border:1px solid var(--line);display:flex;align-items:center;gap:14px;white-space:nowrap}
+.chip .v{font-size:34px;font-weight:800;letter-spacing:-.03em}
+.chip .l{font-size:17px;color:#6b7280;font-weight:600;line-height:1.2}
+/* bars */
+.row{display:flex;align-items:center;gap:20px;padding:22px 34px;border-bottom:1px solid #eef0f5}
+.row .nm{width:330px;font-size:22px;font-weight:700;color:var(--ink);display:flex;align-items:center;gap:12px}
+.row .sp{font-size:13px;font-weight:800;padding:4px 10px;border-radius:999px;letter-spacing:.05em}
+.sp-d{background:#fef3c7;color:#b45309}.sp-p{background:#fee2e2;color:#b91c1c}
+.row .ct{width:70px;text-align:right;font-size:26px;font-weight:800;color:var(--ink)}
+.row .tr{flex:1;height:14px;background:#f1f3f8;border-radius:99px;overflow:hidden}
+.row .fl{height:100%;border-radius:99px;width:0}
+.fl-a{background:linear-gradient(90deg,#8b5cf6,#a78bfa)}.fl-w{background:linear-gradient(90deg,#f59e0b,#fbbf24)}
+.hold{margin:22px 34px 30px;padding:20px 24px;border-radius:16px;background:#fffbeb;border:1px solid #fde68a;display:flex;align-items:center;gap:18px}
+.hold .n{font-size:34px;font-weight:800;color:#b45309}
+.hold .w{font-size:14px;font-weight:800;background:#fff;border:1px solid #fde68a;color:#92400e;padding:5px 11px;border-radius:99px}
+.hold .t{font-size:22px;font-weight:700;color:var(--ink)}
+/* svg holders */
+.svgwrap{position:absolute;overflow:hidden}
+.svgwrap svg{position:absolute;left:0;top:0;transform-origin:0 0}
+/* audit */
+.gauge{position:absolute}
+.gauge .num{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.gauge .num b{font-size:78px;font-weight:800;color:var(--ink);letter-spacing:-.04em;line-height:1}
+.gauge .num span{font-size:18px;color:#6b7280;font-weight:700;margin-top:4px}
+.gauge .num em{font-style:normal;font-size:15px;font-weight:800;color:#b45309;background:#fef3c7;padding:5px 12px;border-radius:99px;margin-top:10px;letter-spacing:.06em}
+.cat{display:flex;flex-direction:column;gap:6px}
+.cat .t{display:flex;justify-content:space-between;font-size:18px;font-weight:700;color:var(--ink)}
+.cat .t span{color:#6b7280}
+.cat .tr{height:10px;background:#f1f3f8;border-radius:99px;overflow:hidden}
+.cat .fl{height:100%;border-radius:99px;width:0}
+.fix{position:absolute;left:34px;right:34px;display:flex;align-items:center;gap:20px;padding:18px 22px;border-radius:16px;border:1px solid var(--line);background:#fff}
+.fix .pts{flex:none;width:78px;height:52px;border-radius:12px;background:#dcfce7;color:#15803d;font-weight:800;font-size:24px;display:grid;place-items:center}
+.fix .tx{font-size:20px;font-weight:700;color:var(--ink);line-height:1.3}
+.fix .sev{margin-left:auto;font-size:13px;font-weight:800;letter-spacing:.08em;padding:5px 11px;border-radius:99px;flex:none}
+.sev-c{background:#fee2e2;color:#b91c1c}.sev-h{background:#ffedd5;color:#c2410c}.sev-m{background:#fef3c7;color:#b45309}
+/* tiles */
+.tile3{position:absolute;width:480px;height:360px;background:#fff;border-radius:28px;border:1px solid var(--line);box-shadow:0 40px 100px rgba(20,33,61,.12);padding:40px;display:flex;flex-direction:column}
+.tile3 .ico{width:84px;height:84px;border-radius:22px;display:grid;place-items:center;font-size:40px;background:#f3efff}
+.tile3 .tt{font-size:38px;font-weight:800;letter-spacing:-.03em;color:var(--ink);margin-top:30px;line-height:1.1}
+.tile3 .dd{font-size:21px;color:#6b7280;font-weight:600;margin-top:14px;line-height:1.4}
+.search{margin-top:auto;border:2px solid var(--acc3);border-radius:14px;padding:14px 18px;font-size:20px;color:var(--ink);font-weight:600;display:flex;gap:10px;align-items:center}
+.search .cur{display:inline-block;width:2px;height:24px;background:var(--acc)}
+.url{position:absolute;left:50%;transform:translateX(-50%);padding:22px 48px;border-radius:999px;background:linear-gradient(135deg,#8b5cf6,#6d28d9);color:#fff;font-size:44px;font-weight:800;letter-spacing:-.02em;box-shadow:0 0 0 1px rgba(255,255,255,.15) inset,0 20px 80px rgba(139,92,246,.55)}
+
+.win{position:absolute;left:330px;top:270px;width:1260px;height:1000px;border-radius:22px;overflow:hidden;background:#f6f7fb;box-shadow:0 60px 140px rgba(0,0,0,.6),0 0 0 1px rgba(255,255,255,.08);transform-origin:50% 0}
+.win .bar{height:58px;background:#fff;border-bottom:1px solid #e2e6ef;display:flex;align-items:center;gap:18px;padding:0 22px}
+.win .bar .url{flex:1;max-width:620px;margin:0 auto;height:34px;border-radius:10px;background:#f3f5f9;display:flex;align-items:center;justify-content:center;gap:8px;font-size:16px;font-weight:700;color:#4a5568}
+.win .vp{position:absolute;left:0;right:0;top:58px;bottom:0;overflow:hidden}
+.win .vp img{position:absolute;left:50%;top:24px;width:1180px;margin-left:-590px}
+.dchip{position:absolute;background:rgba(24,22,44,.92);border:1px solid rgba(167,139,250,.35);border-radius:16px;padding:14px 20px;color:#fff;font-size:21px;font-weight:700;box-shadow:0 20px 60px rgba(0,0,0,.5);white-space:nowrap}
+.dchip b{color:#c4b5fd;font-weight:800;margin-right:8px;font-size:14px;letter-spacing:.12em}
+
+#cursor{position:absolute;left:0;top:0;width:44px;height:44px;z-index:50;pointer-events:none;opacity:0;filter:drop-shadow(0 6px 14px rgba(0,0,0,.35));transform-origin:4px 4px}
+.ripple{position:absolute;left:0;top:0;width:90px;height:90px;margin:-45px 0 0 -45px;border-radius:50%;border:4px solid var(--acc);z-index:49;pointer-events:none;opacity:0}
+</style></head>
+<body><div id="stage">
+
+<!-- S1 hook -->
+<section class="scene dark" id="s1">
+  <div id="fcards"></div>
+  <div class="big" data-a="rise" data-in="0.3" data-out="2.9" style="top:450px;font-size:92px">Somewhere inside your<br>GHL account…</div>
+  <div class="big" data-a="rise" data-in="3.2" style="top:420px;font-size:128px"><span id="c449">449</span> contacts are<br><span class="hot">stuck.</span></div>
+</section>
+
+<!-- S2 off -->
+<section class="scene dark" id="s2" style="--glow:rgba(239,90,60,.22)">
+  <div class="big" data-a="rise" data-in="6.4" style="top:170px;font-size:84px">Sitting in workflows that are<br><span class="hot">switched off.</span></div>
+  <div class="ocard" data-a="left" data-in="7.3" style="left:640px;top:520px"><div class="ic">⚙️</div><div><div class="n">Retainer Reminder (yearly)</div><div class="s">412 contacts inside · going nowhere</div></div><div class="pill pill-draft">DRAFT</div></div>
+  <div class="ocard" data-a="left" data-in="7.8" style="left:640px;top:690px"><div class="ic">⚙️</div><div><div class="n">Promo: Spring 2026</div><div class="s">37 contacts inside · going nowhere</div></div><div class="pill pill-paused">PAUSED</div></div>
+  <div class="big" data-a="fade" data-in="8.9" style="top:900px;font-size:30px;font-weight:600;color:rgba(255,255,255,.55);letter-spacing:0">Nobody would ever know. Unless you looked.</div>
+</section>
+
+<!-- S3 brand -->
+<section class="scene dark" id="s3" style="--glow:rgba(99,102,241,.38)">
+  <div class="logo" data-a="pop" data-in="11.0" style="top:380px"><div class="tile"><svg viewBox="0 0 24 24" fill="#fff"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></svg></div><div class="word">Super Snapshot <span>AI</span></div></div>
+  <div class="big" data-a="rise" data-in="11.8" style="top:560px;font-size:64px">See everything inside<br><span class="grad">any GHL account.</span></div>
+</section>
+
+<!-- S4 workflow analysis -->
+<section class="scene light" id="s4">
+  <div class="left">
+    <div class="eyebrow" data-a="rise" data-in="15.4">WORKFLOW ANALYSIS</div>
+    <div class="h" data-a="rise" data-in="15.6">See where every contact <span class="acc">is sitting.</span></div>
+    <div class="sub" data-a="rise" data-in="16.0">Every workflow holding people, largest first, down to the exact step they're waiting on.</div>
+  </div>
+  <div class="card" data-a="card" data-in="16.2" style="left:880px;top:190px;width:920px">
+    <div class="hd"><div class="dots"><i></i><i></i><i></i></div><b>Where people are sitting</b><span class="tag">562 in flight</span></div>
+    <div class="row"><div class="nm">Retainer Reminder<span class="sp sp-d">DRAFT</span></div><div class="ct" data-count="412" data-cin="17.0">0</div><div class="tr"><div class="fl fl-w" data-bar="1" data-bin="17.0"></div></div></div>
+    <div class="row"><div class="nm">Hygiene Recall: 6 Mo</div><div class="ct" data-count="91" data-cin="17.3">0</div><div class="tr"><div class="fl fl-a" data-bar="0.221" data-bin="17.3"></div></div></div>
+    <div class="row"><div class="nm">Promo: Spring 2026<span class="sp sp-p">PAUSED</span></div><div class="ct" data-count="37" data-cin="17.6">0</div><div class="tr"><div class="fl fl-w" data-bar="0.09" data-bin="17.6"></div></div></div>
+    <div class="row" style="border:0"><div class="nm">New Patient Intake</div><div class="ct" data-count="22" data-cin="17.9">0</div><div class="tr"><div class="fl fl-a" data-bar="0.053" data-bin="17.9"></div></div></div>
+    <div data-a="rise" data-in="19.6"><div class="hold"><div class="n">412</div><div class="w">WAIT</div><div class="t">Stuck on “Wait 365 days” in a workflow that's off</div></div></div>
+  </div>
+  <div class="chip" data-a="pop" data-in="21.0" style="left:1560px;top:120px"><div class="v" style="color:#b45309">449</div><div class="l">stuck in a<br>workflow that's off</div></div>
+  <div class="chip" data-a="pop" data-in="21.4" style="left:820px;top:830px"><div class="v" style="color:var(--acc)">22</div><div class="l">workflows holding<br>nobody</div></div>
+</section>
+
+<!-- S5 workflow maps -->
+<section class="scene light" id="s5">
+  <div class="left">
+    <div class="eyebrow" data-a="rise" data-in="25.4">WORKFLOW MAPS</div>
+    <div class="h" data-a="rise" data-in="25.6">Every workflow. <span class="acc">Drawn out.</span></div>
+    <div class="sub" data-a="rise" data-in="26.0">Triggers, steps and every if/else branch, without clicking through the builder.</div>
+  </div>
+  <div class="card" data-a="card" data-in="26.1" style="left:880px;top:90px;width:920px;height:900px">
+    <div class="hd"><div class="dots"><i></i><i></i><i></i></div><b>New Patient Intake</b><span class="tag">PUBLISHED · 10 STEPS</span></div>
+    <div class="svgwrap" id="diagWrap" style="left:0;top:84px;width:920px;height:816px"></div>
+  </div>
+  <div class="chip" id="waitChip" data-a="pop" data-in="30.8" style="left:930px;top:520px"><div class="v" style="color:var(--acc)">22</div><div class="l">contacts waiting<br>on this step</div></div>
+</section>
+
+<!-- S6 dependencies -->
+<section class="scene light" id="s6">
+  <div class="left">
+    <div class="eyebrow" data-a="rise" data-in="36.4">DEPENDENCIES</div>
+    <div class="h" data-a="rise" data-in="36.6">Know what breaks <span class="acc">before you delete it.</span></div>
+    <div class="sub" data-a="rise" data-in="37.0">Pick any workflow, tag or field. See what points at it, and everything it touches.</div>
+  </div>
+  <div class="card" data-a="card" data-in="37.0" style="left:830px;top:250px;width:1010px;height:580px">
+    <div class="hd"><div class="dots"><i></i><i></i><i></i></div><b>What depends on what</b><span class="tag">WORKFLOW · NEW PATIENT INTAKE</span></div>
+    <div class="svgwrap" id="radWrap" style="left:0;top:84px;width:1010px;height:496px"></div>
+  </div>
+  <div class="chip" data-a="pop" data-in="41.2" style="left:780px;top:170px"><div class="v" style="color:var(--acc)">5</div><div class="l">things depend<br>on this workflow</div></div>
+  <div class="chip" data-a="pop" data-in="41.6" style="left:880px;top:770px"><div class="v" style="color:#0f766e">18</div><div class="l">things this<br>workflow uses</div></div>
+</section>
+
+<!-- S7 whole account -->
+<section class="scene dark" id="s7">
+  <svg id="net" width="1920" height="1080" style="position:absolute;inset:0"></svg>
+  <div class="big" data-a="rise" data-in="45.6" style="top:70px;font-size:80px">Your whole account. <span class="grad">One map.</span></div>
+  <div class="big" data-a="rise" data-in="47.6" style="top:950px;font-size:34px;font-weight:700;letter-spacing:-.01em;color:rgba(255,255,255,.8)"><span id="n271" class="grad">0</span> assets · <span id="n417" class="grad">0</span> connections · every one traced</div>
+</section>
+
+<!-- S8 audit -->
+<section class="scene light" id="s8">
+  <div class="left">
+    <div class="eyebrow" data-a="rise" data-in="53.4">ACCOUNT AUDIT</div>
+    <div class="h" data-a="rise" data-in="53.6">A health score. <span class="acc">And the fixes that raise it.</span></div>
+    <div class="sub" data-a="rise" data-in="54.0">Every finding says where it is, why it matters, and how many points fixing it is worth.</div>
+  </div>
+  <div class="card" data-a="card" data-in="54.0" style="left:880px;top:120px;width:920px;height:840px">
+    <div class="hd"><div class="dots"><i></i><i></i><i></i></div><b>Account health</b><span class="tag">12 FINDINGS</span></div>
+    <div class="gauge" style="left:40px;top:120px;width:260px;height:260px">
+      <svg width="260" height="260" viewBox="0 0 260 260"><circle cx="130" cy="130" r="112" fill="none" stroke="#f1f3f8" stroke-width="20"/><circle id="garc" cx="130" cy="130" r="112" fill="none" stroke="url(#gg)" stroke-width="20" stroke-linecap="round" transform="rotate(-90 130 130)" stroke-dasharray="703.7" stroke-dashoffset="703.7"/><defs><linearGradient id="gg" x1="0" x2="1"><stop offset="0" stop-color="#f59e0b"/><stop offset="1" stop-color="#f97316"/></linearGradient></defs></svg>
+      <div class="num"><b id="g48">0</b><span>of 100</span><em>AT RISK</em></div>
+    </div>
+    <div style="position:absolute;left:350px;right:40px;top:140px;display:flex;flex-direction:column;gap:26px">
+      <div class="cat"><div class="t">Activation &amp; Follow-up<span>0/40</span></div><div class="tr"><div class="fl" style="background:#ef4444" data-bar="0.012" data-bin="55.0"></div></div></div>
+      <div class="cat"><div class="t">Build Integrity<span>35/45</span></div><div class="tr"><div class="fl fl-a" data-bar="0.778" data-bin="55.2"></div></div></div>
+      <div class="cat"><div class="t">Email Best Practices<span>13/15</span></div><div class="tr"><div class="fl fl-a" data-bar="0.867" data-bin="55.4"></div></div></div>
+    </div>
+    <div style="position:absolute;left:34px;top:430px;font-size:15px;font-weight:800;letter-spacing:.14em;color:#6b7280" data-a="fade" data-in="56.4">TOP WAYS TO RAISE THE SCORE</div>
+    <div class="fix" data-a="left" data-in="56.8" style="top:470px"><div class="pts">+32</div><div class="tx">449 contacts are stuck inside 2 workflows that are switched off</div><div class="sev sev-c">CRITICAL</div></div>
+    <div class="fix" data-a="left" data-in="57.4" style="top:582px"><div class="pts">+6</div><div class="tx">4 of 26 workflows are switched off (draft)</div><div class="sev sev-h">HIGH</div></div>
+    <div class="fix" data-a="left" data-in="58.0" style="top:694px"><div class="pts">+3</div><div class="tx">2 of 8 funnels and websites are unpublished</div><div class="sev sev-m">MEDIUM</div></div>
+  </div>
+</section>
+
+
+<!-- S8b audit pan -->
+<section class="scene dark" id="s8b" style="--glow:rgba(139,92,246,.30)">
+  <div style="position:absolute;inset:0;perspective:2200px">
+    <div class="win" id="awin"><div class="bar"><div class="dots"><i></i><i></i><i></i></div><div class="url">🔒 Riverbend Dental Group · Audit</div></div><div class="vp"><img id="aimg" src="assets/audit.png"></div></div>
+  </div>
+  <div class="big" data-a="rise" data-in="62.2" style="top:70px;font-size:72px">The full audit. <span class="grad">Every finding explained.</span></div>
+  <div class="big" data-a="fade" data-in="62.7" style="top:168px;font-size:26px;font-weight:600;color:rgba(255,255,255,.6);letter-spacing:0">Where it is. Why it matters. How to fix it. And a link straight into GHL.</div>
+  <div class="dchip" data-a="left" data-in="64.2" style="left:60px;top:470px"><b>WHERE</b>The exact screen it lives on</div>
+  <div class="dchip" data-a="left" data-in="65.4" style="left:1470px;top:620px"><b>FIX</b>A plain-English next step</div>
+  <div class="dchip" data-a="left" data-in="66.6" style="left:90px;top:800px"><b>OPEN ↗</b>One click into GHL</div>
+</section>
+
+<!-- S9 extras -->
+<section class="scene light" id="s9">
+  <div class="big" data-a="rise" data-in="70.3" style="top:150px;font-size:80px;color:var(--ink)">Search it. <span class="acc">Open it in GHL.</span></div>
+  <div class="tile3" data-a="card" data-in="70.9" style="left:445px;top:420px"><div class="ico">🔍</div><div class="tt">Search every asset</div><div class="search">🔎 <span id="typed"></span><span class="cur"></span></div></div>
+  <div class="tile3" data-a="card" data-in="71.3" style="left:995px;top:420px"><div class="ico">↗</div><div class="tt">One click into GHL</div><div class="dd">Every asset and every finding links to the exact screen that fixes it.</div></div>
+</section>
+
+<!-- S10 end -->
+<section class="scene dark" id="s10" style="--glow:rgba(99,102,241,.38)">
+  <div class="logo" data-a="pop" data-in="75.0" style="top:250px"><div class="tile"><svg viewBox="0 0 24 24" fill="#fff"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></svg></div><div class="word">Super Snapshot <span>AI</span></div></div>
+  <div class="big" data-a="rise" data-in="75.6" style="top:450px;font-size:76px">Your whole GHL account.<br><span class="grad">One clear report.</span></div>
+  <div class="url" data-a="pop" data-in="76.6" style="top:720px">supersnapshotai.com</div>
+</section>
+
+<svg id="cursor" viewBox="0 0 24 24"><path d="M3 2l7.5 19 2.6-7.6L21 10.8z" fill="#fff" stroke="#14213d" stroke-width="1.6" stroke-linejoin="round"/></svg>
+<div class="ripple" id="ripple"></div>
+</div>
+<script>
+const DURATION = 80;
+// scene windows [in, out] with crossfade
+const SCENES = { s1:[0,6.2], s2:[6.0,10.6], s3:[10.4,15.0], s4:[14.8,25.2], s5:[25.0,36.2], s6:[36.0,45.2], s7:[45.0,53.2], s8:[53.0,62.0], s8b:[61.8,70.0], s9:[69.8,74.8], s10:[74.6,80] };
+const FADE = 0.45;
+const clamp = (v,a=0,b=1)=>Math.min(b,Math.max(a,v));
+const P = (t,a,b)=>clamp((t-a)/(b-a));
+const out3 = x=>1-Math.pow(1-x,3);
+const io = x=>x<.5?4*x*x*x:1-Math.pow(-2*x+2,3)/2;
+const back = x=>{const c1=1.6,c3=c1+1;return 1+c3*Math.pow(x-1,3)+c1*Math.pow(x-1,2)};
+const $ = s=>document.querySelector(s);
+
+// ---- floating cards for S1
+const WF = [['⚙️','Hygiene Recall: 6 Months','91 in flight · published','#3b2f6b'],['📨','Review Request After Visit','published','#1f3b5b'],['⚙️','Invisalign Lead Nurture','published','#3b2f6b'],['⏸️','Promo: Spring 2026','37 in flight · paused','#5b2323'],['⚙️','Treatment Plan Follow-up','published','#3b2f6b'],['📝','Retainer Reminder (yearly)','412 in flight · draft','#5b4012'],['⚙️','Reactivation: 12+ Months','published','#3b2f6b'],['💬','Chatbot Lead Handoff','draft','#5b4012'],['⚙️','New Patient Intake','22 in flight · published','#3b2f6b'],['✉️','Whitening Offer Nurture','published','#1f3b5b']];
+const POS = [[80,90,-4],[560,60,3],[1080,110,-2],[1480,70,4],[60,820,3],[520,880,-3],[1000,860,2],[1480,830,-4],[40,450,-6],[1560,470,5]];
+const fc = $('#fcards');
+WF.forEach((w,i)=>{const d=document.createElement('div');d.className='fcard';d.innerHTML=`<div class="ic" style="background:${w[3]}">${w[0]}</div><div><div class="k">WORKFLOW</div><div class="n">${w[1]}</div><div class="s">${w[2]}</div></div>`;fc.appendChild(d);d._p=POS[i];});
+
+// ---- load svgs
+async function loadSvg(url, wrap){ const txt = await (await fetch(url)).text(); wrap.innerHTML = txt; const svg = wrap.querySelector('svg'); return svg; }
+function prepMermaid(svg){
+  const items=[];
+  const add=(el,kind)=>{const b=el.getBBox(); const m=el.getCTM&&el.getCTM(); items.push({el,kind,x:b.x+(el.transform?.baseVal?.consolidate()?.matrix.e||0),y:b.y+(el.transform?.baseVal?.consolidate()?.matrix.f||0),w:b.width,h:b.height});};
+  svg.querySelectorAll('g.nodes > g').forEach(n=>add(n,'node'));
+  svg.querySelectorAll('g.edgePaths > path').forEach(p=>{add(p,'edge'); const L=p.getTotalLength(); p.style.strokeDasharray=L; p._L=L; p._m=p.getAttribute('marker-end');});
+  svg.querySelectorAll('g.edgeLabels > g').forEach(n=>add(n,'label'));
+  return items;
+}
+let diag, diagItems, rad, radItems, net;
+async function init(){
+  diag = await loadSvg('assets/diagram.svg', $('#diagWrap'));
+  diagItems = prepMermaid(diag);
+  rad = await loadSvg('assets/radial.svg', $('#radWrap'));
+  radItems = prepMermaid(rad);
+  { const cn=[...rad.querySelectorAll('g.nodes > g')].find(g=>/Workflow: New Patient Intake/.test(g.textContent)); if(cn) cn.id='radCenter'; }
+  // network
+  const g = await (await fetch('assets/graph.json')).json();
+  const svg = $('#net'); const NS='http://www.w3.org/2000/svg';
+  const xs=g.circles.map(c=>c.x), ys=g.circles.map(c=>c.y);
+  const cx=(Math.min(...xs)+Math.max(...xs))/2, cy=(Math.min(...ys)+Math.max(...ys))/2;
+  const span=Math.max(Math.max(...xs)-Math.min(...xs), (Math.max(...ys)-Math.min(...ys))*1.3);
+  const S = 760/span;
+  const root=document.createElementNS(NS,'g'); svg.appendChild(root);
+  const map=(x,y)=>[(x-cx)*S, (y-cy)*S];
+  const lines = g.lines.map(l=>{const e=document.createElementNS(NS,'line'); const [a,b]=map(l.x1,l.y1),[c,d]=map(l.x2,l.y2); e.setAttribute('x1',a);e.setAttribute('y1',b);e.setAttribute('x2',c);e.setAttribute('y2',d); e.setAttribute('stroke', l.stroke==='none'?'#8b5cf6':l.stroke); e.setAttribute('stroke-width',1.1); root.appendChild(e); return {e, r:Math.hypot((a+c)/2,(b+d)/2)};});
+  const nodes = g.circles.map(c=>{const e=document.createElementNS(NS,'circle'); const [x,y]=map(c.x,c.y); e.setAttribute('cx',x);e.setAttribute('cy',y); e.setAttribute('fill',c.fill); root.appendChild(e); return {e, r0:Math.max(3,c.r*S*0.9), d:Math.hypot(x,y), x,y};});
+  const maxD=Math.max(...nodes.map(n=>n.d));
+  net={root,lines,nodes,maxD};
+  window.__ready=true;
+}
+
+// ---- entrance effects
+function fx(el,t){
+  const a=el.dataset.a, tin=+el.dataset.in, tout=el.dataset.out?+el.dataset.out:null;
+  let k = out3(P(t,tin,tin+0.7)); let o=k, tr='';
+  if(a==='rise') tr=`translateY(${(1-k)*40}px)`;
+  if(a==='left') tr=`translateX(${(1-k)*-60}px)`;
+  if(a==='pop'){const kb=back(P(t,tin,tin+0.6)); o=P(t,tin,tin+0.3); tr=`scale(${0.6+0.4*kb})`;}
+  if(a==='card'){ tr=`translateY(${(1-k)*80}px) scale(${0.96+0.04*k})`; }
+  if(tout!=null){const ko=P(t,tout,tout+0.4); o*=1-ko; tr+=` translateY(${-ko*30}px)`;}
+  if(el.classList.contains('logo')||el.classList.contains('url')) tr='translateX(-50%) '+tr;
+  el.style.opacity=o; el.style.transform=tr;
+}
+const fmt=n=>Math.round(n).toLocaleString('en-US');
+
+function seek(t){
+  const ids=Object.keys(SCENES);
+  ids.forEach((id,i)=>{
+    const el=document.getElementById(id); const a=SCENES[id][0];
+    const next = ids[i+1]? SCENES[ids[i+1]][0] : Infinity;
+    const o = i===0? 1 : io(P(t,a,a+FADE));
+    const vis = t>=a && t < next+FADE;
+    el.style.opacity=o; el.style.display = vis?'block':'none';
+  });
+  document.querySelectorAll('[data-a]').forEach(e=>fx(e,t));
+  // counters & bars
+  document.querySelectorAll('[data-count]').forEach(e=>{e.textContent=fmt(+e.dataset.count*out3(P(t,+e.dataset.cin,+e.dataset.cin+1.4)));});
+  document.querySelectorAll('[data-bar]').forEach(e=>{e.style.width=(+e.dataset.bar*100*io(P(t,+e.dataset.bin,+e.dataset.bin+1.4)))+'%';});
+  // S1
+  document.querySelectorAll('.fcard').forEach((d,i)=>{const [x,y,r]=d._p; const dx=Math.sin(t*0.35+i)*14, dy=Math.cos(t*0.3+i*1.7)*12 - t*6; d.style.transform=`translate(${x+dx}px,${y+dy}px) rotate(${r}deg)`; d.style.left=0; d.style.top=0; d.style.opacity= (0.55*P(t,0,1.2)) * (1 - 0.5*P(t,3,4));});
+  $('#c449').textContent=fmt(449*out3(P(t,3.3,4.6)));
+  // S5 diagram: scale + reveal + pan
+  if(diag){
+    const W=920, sc=1.55, vw=487.44*sc, vh=884*sc;
+    const t0=26.6, t1=33.0;
+    const pan = io(P(t,28.0,34.8));
+    const oy = -pan*(vh-816+60) + 24;
+    diag.style.transform=`translate(${(W-vw)/2}px,${oy}px) scale(${sc})`;
+    diagItems.forEach(it=>{const k=P(t, t0+(it.y/884)*(t1-t0), t0+(it.y/884)*(t1-t0)+0.5);
+      if(it.kind==='edge'){it.el.style.strokeDashoffset=it.el._L*(1-k); it.el.style.opacity=k>0?1:0; if(it.el._m){ if(k>=0.97) it.el.setAttribute('marker-end',it.el._m); else it.el.removeAttribute('marker-end'); }} else {it.el.style.opacity=k;}});
+    const wn=diag.querySelector('#flowchart-n4-13 polygon'); const hk=P(t,30.6,31.0);
+    if(wn){ wn.style.setProperty('stroke', hk>0?'#8b5cf6':'#94a3b8','important'); wn.style.setProperty('stroke-width', (1.5+1.5*hk)+'px','important'); wn.style.setProperty('fill', hk>0?'#f3efff':'#ffffff','important'); }
+    const chip=$('#waitChip'); // follows the wait node in screen space
+    const waitY = 90 + 84 + oy + 452*sc - 40; chip.style.top = Math.min(900, Math.max(160, waitY))+'px';
+  }
+  // S6 radial
+  if(rad){
+    const sc=1.5, vw=633.16*sc, vh=315.44*sc;
+    rad.style.transform=`translate(${(1010-vw)/2}px,${(496-vh)/2}px) scale(${sc})`;
+    const t0=38.1, VH=rad.viewBox.baseVal.height;
+    radItems.forEach(it=>{
+      const center = it.kind==='node' && /Workflow: New Patient Intake/.test(it.el.textContent);
+      let st = center? t0-0.8 : (it.kind==='edge'? t0+0.5+ (it.y/VH)*2.2 : t0+0.9+(it.y/VH)*2.2);
+      if(it.x+it.w<440) st = (it.kind==='node'? t0+0.5 : t0+0.2)+(it.y/VH)*0.4;
+      const k=P(t,st,st+0.6);
+      if(it.kind==='edge'){it.el.style.strokeDashoffset=it.el._L*(1-k); it.el.style.opacity=k>0?1:0; if(it.el._m){ if(k>=0.97) it.el.setAttribute('marker-end',it.el._m); else it.el.removeAttribute('marker-end'); }} else {it.el.style.opacity=k;}
+    });
+  }
+  // S7 network
+  if(net){
+    const zoom = 1 + 0.18*io(P(t,45,53.2));
+    const rot = (t-45)*1.6;
+    net.root.setAttribute('transform',`translate(960,560) rotate(${rot}) scale(${zoom})`);
+    net.nodes.forEach(n=>{const st=45.6+(n.d/net.maxD)*2.4; const k=back(P(t,st,st+0.5)); const pulse = 1+0.12*Math.sin(t*3+n.d*0.05)*P(t,49,50); n.e.setAttribute('r', Math.max(0,n.r0*k*pulse)); n.e.style.opacity=P(t,st,st+0.2);});
+    net.lines.forEach(l=>{const st=46.0+(l.r/net.maxD)*2.4; l.e.style.opacity=0.45*P(t,st,st+0.8);});
+    $('#n271').textContent=fmt(271*out3(P(t,47.8,49.6)));
+    $('#n417').textContent=fmt(417*out3(P(t,47.8,49.6)));
+  }
+  // S8b audit pan
+  { const w=$('#awin'); const k=out3(P(t,61.8,63.2)); const pan=io(P(t,63.0,69.8));
+    w.style.transform=`translateY(${(1-k)*160}px) rotateX(${14-4*pan}deg) scale(${0.94+0.04*k})`;
+    $('#aimg').style.transform=`translateY(${-pan*2350}px)`; }
+  // S8 gauge
+  const gk=out3(P(t,54.8,56.6)); $('#garc').setAttribute('stroke-dashoffset', 703.7*(1-0.48*gk)); $('#g48').textContent=Math.round(48*gk);
+  // S9 typing
+  const q='insurance-pending'; $('#typed').textContent=q.slice(0, Math.floor(q.length*P(t,72.0,73.4)));
+}
+
+// ---- cursor: moves to real elements (measured every frame, so it follows panning/scaling) and clicks
+// Each shot: cursor enters from `from` (fraction of stage), glides to `sel`, clicks at `click`, fades at `hide`.
+const CURSOR = [
+  { show:18.5, hide:20.9, from:[0.92,0.95], moves:[{t0:18.5,t1:19.2,sel:'#s4 .row',dx:0.18,click:19.3}] },
+  { show:29.5, hide:32.2, from:[0.95,0.85], moves:[{t0:29.5,t1:30.4,sel:'#flowchart-n4-13',click:30.5}] },
+  { show:37.0, hide:39.6, from:[0.95,0.95], moves:[{t0:37.0,t1:37.8,sel:'#radCenter',click:37.9}] },
+  { show:71.0, hide:74.5, from:[0.9,0.95], moves:[{t0:71.0,t1:71.7,sel:'#s9 .search',dx:-0.3,click:71.8},{t0:73.4,t1:74.0,sel:'#s9 .tile3:nth-of-type(3) .tt',click:74.15}] },
+];
+window.CURSOR = CURSOR;
+// Sounds the automatic rules can't infer (see product-video/scripts/cues.mjs)
+window.SFX_EXTRA = [
+  { t:3.2, s:'thud', g:-6 },                                                      // "449 contacts are stuck." lands
+  ...Array.from({length:8},(_,i)=>({ t:3.3+1.2*Math.pow(i/8,1.6), s:'tick', g:-7 })), // hook count-up
+  ...Array.from({length:8},(_,i)=>({ t:47.8+1.6*Math.pow(i/8,1.6), s:'tick', g:-8 })),// network counters 271 / 417
+  ...Array.from({length:8},(_,i)=>({ t:54.8+1.6*Math.pow(i/8,1.6), s:'tick', g:-7 })),// health score count-up
+  ...Array.from({length:17},(_,i)=>({ t:72.0+i*(1.4/17), s:'key', g:-6-(i%3), p:1+((i*7)%5-2)*0.03 })), // typing
+];
+function tgt(sel,dx=0,dy=0){ const el=document.querySelector(sel); if(!el) return null; const r=el.getBoundingClientRect(); return [r.left+r.width*(0.5+dx), r.top+r.height*(0.5+dy)]; }
+function cursorSeek(t){
+  const c=document.getElementById('cursor'), rp=document.getElementById('ripple');
+  const W=innerWidth, H=innerHeight; c.style.opacity=0; rp.style.opacity=0;
+  for(const s of CURSOR){
+    if(t<s.show-0.01 || t>s.hide+0.3) continue;
+    let pos=[s.from[0]*W, s.from[1]*H];
+    for(const m of s.moves){ const p=tgt(m.sel,m.dx||0,m.dy||0); if(!p) continue;
+      if(t>=m.t0){ const k=io(P(t,m.t0,m.t1)); pos=[pos[0]+(p[0]-pos[0])*k, pos[1]+(p[1]-pos[1])*k]; } }
+    let sc=1; let clickAt=null;
+    for(const m of s.moves){ if(m.click!=null && t>=m.click-0.1 && t<=m.click+0.5){ clickAt=m.click; } }
+    if(clickAt!=null){ const d=t-clickAt; sc = d<0 ? 1-0.15*P(t,clickAt-0.1,clickAt) : 0.85+0.15*P(t,clickAt,clickAt+0.12);
+      if(d>=0){ const k=P(t,clickAt,clickAt+0.45); rp.style.opacity=(1-k)*0.9; rp.style.transform=`translate(${pos[0]}px,${pos[1]}px) scale(${0.2+0.9*out3(k)})`; } }
+    const o=P(t,s.show,s.show+0.25)*(1-P(t,s.hide,s.hide+0.3));
+    const size = H>W ? 1.25 : 1;
+    c.style.opacity=o; c.style.transform=`translate(${pos[0]-4}px,${pos[1]-4}px) scale(${sc*size})`;
+  }
+}
+const __drawFrame=seek; window.seek=t=>{ __drawFrame(t); cursorSeek(t); }; window.DURATION=DURATION;
+init().then(()=>{ const u=new URLSearchParams(location.search); if(u.has('t')) seek(+u.get('t')); else { const s=performance.now(); const loop=()=>{seek(((performance.now()-s)/1000)%DURATION); requestAnimationFrame(loop)}; loop(); } });
+</script>
+</body></html>

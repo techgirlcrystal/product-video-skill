@@ -1,0 +1,312 @@
+<!doctype html>
+<!--
+  Product video scene template. One file renders both 16:9 (1920x1080 viewport) and 9:16 (1080x1920 viewport):
+  the @media (orientation: portrait) block re-lays everything out. Copy to <workdir>/index.html and replace
+  every [BRACKETED] placeholder with the product's REAL numbers, names and visuals.
+
+  Contract used by scripts/render.mjs and scripts/preview.mjs:
+    window.seek(t)     -> draws the frame at time t (pure function of t: no CSS animations, no timers)
+    window.DURATION    -> total seconds
+    window.__ready     -> set true once fonts/SVGs/JSON are loaded
+
+  Scene patterns included (delete what you don't use, duplicate what you do):
+    s1  hook      dark, blurred floating cards drifting, count-up headline number
+    s2  brand     dark, logo tile + wordmark + promise
+    s3  feature   light split: eyebrow/headline/sub + animated bar card + floating stat chips
+    s4  feature   light split: SVG diagram revealed top-to-bottom while the camera pans down
+    s5  cinematic dark, 3D-tilted browser window panning over a tall real screenshot
+    s6  end       dark, logo + tagline + URL pill
+-->
+<html><head><meta charset="utf-8"><title>[PRODUCT] overview</title>
+<link rel="stylesheet" href="assets/fonts.css"><!-- embed the product's font here (see references/extraction.md) -->
+<style>
+:root{
+  --acc:[#8b5cf6];      /* product accent: pull from the product's CSS tokens */
+  --acc2:[#6d28d9];     /* darker accent for small text */
+  --acc3:[#a78bfa];     /* lighter accent for gradients on dark */
+  --font:[Manrope], system-ui, sans-serif;
+  --ink:#14213d; --muted:#6b7280; --line:#e2e6ef; --bg:#f6f7fb; --dark:#0b0a17;
+  --hot1:#fb923c; --hot2:#f97316;   /* "pain" color for the hook number */
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:100vw;height:100vh;overflow:hidden;background:#000;font-family:var(--font);-webkit-font-smoothing:antialiased}
+#stage{position:relative;width:100vw;height:100vh;overflow:hidden;background:var(--dark)}
+.scene{position:absolute;inset:0;display:none}
+.dark{background:radial-gradient(ellipse 60% 55% at 50% 50%, var(--glow, color-mix(in srgb, var(--acc) 28%, transparent)), transparent 70%), var(--dark)}
+.dark::before{content:"";position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.035) 1px,transparent 1px);background-size:64px 64px;mask-image:radial-gradient(ellipse 70% 70% at 50% 50%,#000 30%,transparent 80%)}
+.light{background:var(--bg)}
+.light::before{content:"";position:absolute;inset:0;background-image:radial-gradient(rgba(20,33,61,.09) 1.2px,transparent 1.2px);background-size:28px 28px}
+.big{position:absolute;left:0;right:0;text-align:center;color:#fff;font-weight:800;letter-spacing:-.035em;line-height:1.02}
+.grad{background:linear-gradient(90deg,var(--acc3),#ddd6fe);-webkit-background-clip:text;background-clip:text;color:transparent}
+.hot{background:linear-gradient(90deg,var(--hot1),var(--hot2));-webkit-background-clip:text;background-clip:text;color:transparent}
+.acc{color:var(--acc)}
+.muted-line{font-size:30px;font-weight:600;color:rgba(255,255,255,.55);letter-spacing:0}
+/* floating cards (hook) */
+.fcard{position:absolute;left:0;top:0;width:380px;padding:18px 22px;border-radius:18px;background:rgba(28,26,48,.85);border:1px solid rgba(255,255,255,.07);color:#fff;display:flex;gap:16px;align-items:center;filter:blur(3px)}
+.fcard .ic{width:48px;height:48px;border-radius:12px;display:grid;place-items:center;font-size:24px;flex:none;background:#3b2f6b}
+.fcard .k{font-size:12px;letter-spacing:.14em;color:rgba(255,255,255,.4);font-weight:700}
+.fcard .n{font-size:19px;font-weight:700;margin-top:3px}
+.fcard .s{font-size:14px;color:rgba(255,255,255,.5);margin-top:2px}
+/* logo + url */
+.logo{position:absolute;left:50%;display:flex;align-items:center;gap:28px}
+.logo .tile{width:120px;height:120px;border-radius:30px;background:linear-gradient(135deg,var(--acc3),var(--acc2));display:grid;place-items:center;box-shadow:0 0 80px color-mix(in srgb, var(--acc) 70%, transparent)}
+.logo .tile svg,.logo .tile img{width:64px;height:64px}
+.logo .word{font-size:92px;font-weight:800;letter-spacing:-.04em;color:#fff;white-space:nowrap}
+.logo .word span{color:var(--acc3)}
+.url{position:absolute;left:50%;padding:22px 48px;border-radius:999px;background:linear-gradient(135deg,var(--acc),var(--acc2));color:#fff;font-size:44px;font-weight:800;letter-spacing:-.02em;white-space:nowrap;box-shadow:0 0 0 1px rgba(255,255,255,.15) inset,0 20px 80px color-mix(in srgb, var(--acc) 55%, transparent)}
+/* light split scenes */
+.left{position:absolute;left:130px;top:0;bottom:0;width:640px;display:flex;flex-direction:column;justify-content:center}
+.eyebrow{font-size:20px;letter-spacing:.2em;font-weight:800;color:var(--acc2);display:flex;align-items:center;gap:14px;margin-bottom:28px}
+.eyebrow::before{content:"";width:12px;height:12px;border-radius:50%;background:var(--acc);box-shadow:0 0 0 6px color-mix(in srgb, var(--acc) 18%, transparent)}
+.h{font-size:92px;font-weight:800;letter-spacing:-.045em;line-height:1.0;color:var(--ink)}
+.sub{font-size:27px;line-height:1.45;color:var(--muted);margin-top:34px;font-weight:500;max-width:600px}
+.card{position:absolute;left:880px;width:920px;background:#fff;border-radius:26px;box-shadow:0 40px 100px rgba(20,33,61,.14),0 2px 6px rgba(20,33,61,.06);border:1px solid var(--line);overflow:hidden}
+.card .hd{padding:26px 34px 18px;display:flex;align-items:center;gap:14px;border-bottom:1px solid var(--line)}
+.card .hd b{font-size:26px;color:var(--ink);letter-spacing:-.02em}
+.card .hd .tag{margin-left:auto;font-size:15px;font-weight:800;color:var(--acc2);background:color-mix(in srgb, var(--acc) 12%, #fff);padding:6px 14px;border-radius:999px}
+.dots{display:flex;gap:8px;margin-right:8px}.dots i{width:13px;height:13px;border-radius:50%;background:#e5e7eb;display:block}
+.chip{position:absolute;background:#fff;border-radius:18px;padding:16px 22px;box-shadow:0 20px 50px rgba(20,33,61,.16);border:1px solid var(--line);display:flex;align-items:center;gap:14px;white-space:nowrap}
+.chip .v{font-size:34px;font-weight:800;letter-spacing:-.03em}
+.chip .l{font-size:17px;color:var(--muted);font-weight:600;line-height:1.2}
+.row{display:flex;align-items:center;gap:20px;padding:22px 34px;border-bottom:1px solid #eef0f5}
+.row .nm{width:330px;font-size:22px;font-weight:700;color:var(--ink)}
+.row .ct{width:70px;text-align:right;font-size:26px;font-weight:800;color:var(--ink)}
+.row .tr{flex:1;height:14px;background:#f1f3f8;border-radius:99px;overflow:hidden}
+.row .fl{height:100%;border-radius:99px;width:0;background:linear-gradient(90deg,var(--acc),var(--acc3))}
+.svgwrap{position:absolute;left:0;right:0;top:84px;bottom:0;overflow:hidden}
+.svgwrap svg{position:absolute;left:0;top:0;transform-origin:0 0}
+/* 3D window pan */
+.persp{position:absolute;inset:0;perspective:2200px}
+.win{position:absolute;left:330px;top:270px;width:1260px;height:1000px;border-radius:22px;overflow:hidden;background:#f6f7fb;box-shadow:0 60px 140px rgba(0,0,0,.6),0 0 0 1px rgba(255,255,255,.08);transform-origin:50% 0}
+.win .bar{height:58px;background:#fff;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:18px;padding:0 22px}
+.win .bar .addr{flex:1;max-width:620px;margin:0 auto;height:34px;border-radius:10px;background:#f3f5f9;display:grid;place-items:center;font-size:16px;font-weight:700;color:#4a5568}
+.win .vp{position:absolute;left:0;right:0;top:58px;bottom:0;overflow:hidden}
+.win .vp img{position:absolute;left:50%;top:24px;width:1180px;margin-left:-590px}
+.dchip{position:absolute;background:rgba(24,22,44,.92);border:1px solid color-mix(in srgb, var(--acc3) 35%, transparent);border-radius:16px;padding:14px 20px;color:#fff;font-size:21px;font-weight:700;box-shadow:0 20px 60px rgba(0,0,0,.5);white-space:nowrap}
+.dchip b{color:#c4b5fd;font-weight:800;margin-right:8px;font-size:14px;letter-spacing:.12em}
+
+/* ---------- landscape positions (1920x1080) ---------- */
+.p-hook1{top:450px;font-size:92px}.p-hook2{top:420px;font-size:128px}
+.p-logo{top:380px}.p-promise{top:560px;font-size:64px}
+.p-card-bars{top:190px}.p-chipA{left:1560px;top:120px}.p-chipB{left:820px;top:830px}
+.p-card-diag{top:90px;height:900px}.p-chipDiag{left:930px;top:520px}
+.p-winhead{top:70px;font-size:72px}.p-winsub{top:168px;font-size:26px}
+.p-d1{left:60px;top:470px}.p-d2{left:1470px;top:620px}.p-d3{left:90px;top:800px}
+.p-endlogo{top:250px}.p-endtag{top:450px;font-size:76px}.p-endurl{top:720px}
+.br-v{display:none}  /* <br class="br-v"> = line break only in portrait */
+
+/* ---------- portrait overrides (1080x1920) ----------
+   Social apps overlay UI on roughly the top 220px and bottom 350px: keep key content between y≈250 and y≈1550. */
+@media (orientation: portrait){
+  .br-v{display:inline}
+  .left{left:80px;right:80px;width:auto;top:250px;bottom:auto;display:block}
+  .h{font-size:84px}.sub{font-size:30px;margin-top:26px;max-width:none}
+  .card{left:60px;width:960px}
+  .logo .word{font-size:76px}.logo .tile{width:104px;height:104px}
+  .win{left:40px;top:560px;width:1000px;height:1500px}.win .vp img{width:960px;margin-left:-480px}
+  .dchip{font-size:24px}
+  .p-hook1{top:790px;font-size:92px}.p-hook2{top:720px;font-size:132px}
+  .p-logo{top:720px}.p-promise{top:900px;font-size:70px}
+  .p-card-bars{top:780px}.p-chipA{left:60px;top:1400px}.p-chipB{left:560px;top:1400px}
+  .p-card-diag{top:700px;height:1060px}.p-chipDiag{left:90px;top:1200px}
+  .p-winhead{top:250px;font-size:84px}.p-winsub{top:448px;font-size:30px}
+  .p-d1{left:40px;top:900px}.p-d2{left:420px;top:1130px}.p-d3{left:80px;top:1360px}
+  .p-endlogo{top:600px}.p-endtag{top:800px;font-size:80px}.p-endurl{top:1180px}
+}
+/* cursor + click ripple (see CURSOR in the script) */
+#cursor{position:absolute;left:0;top:0;width:44px;height:44px;z-index:50;pointer-events:none;opacity:0;filter:drop-shadow(0 6px 14px rgba(0,0,0,.35));transform-origin:4px 4px}
+.ripple{position:absolute;left:0;top:0;width:90px;height:90px;margin:-45px 0 0 -45px;border-radius:50%;border:4px solid var(--acc);z-index:49;pointer-events:none;opacity:0}
+</style></head>
+<body><div id="stage">
+
+<!-- s1 HOOK: the single most painful REAL number the product surfaces -->
+<section class="scene dark" id="s1">
+  <div id="fcards"></div>
+  <div class="big p-hook1" data-a="rise" data-in="0.3" data-out="2.9">[Somewhere inside your]<br class="br-v"> [account]…</div>
+  <div class="big p-hook2" data-a="rise" data-in="3.2"><span id="hookNum">0</span> [things are]<br><span class="hot">[broken.]</span></div>
+</section>
+
+<!-- s2 BRAND -->
+<section class="scene dark" id="s2" style="--glow:rgba(99,102,241,.38)">
+  <div class="logo p-logo" data-a="pop" data-in="6.6"><div class="tile"><svg viewBox="0 0 24 24" fill="#fff"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></svg></div><div class="word">[Product] <span>[AI]</span></div></div>
+  <div class="big p-promise" data-a="rise" data-in="7.3">[See everything inside]<br><span class="grad">[any account.]</span></div>
+</section>
+
+<!-- s3 FEATURE: animated bars rebuilt from real data -->
+<section class="scene light" id="s3">
+  <div class="left">
+    <div class="eyebrow" data-a="rise" data-in="10.6">[FEATURE NAME]</div>
+    <div class="h" data-a="rise" data-in="10.8">[Outcome headline] <span class="acc">[in two beats.]</span></div>
+    <div class="sub" data-a="rise" data-in="11.2">[One plain-English line on what the viewer gets.]</div>
+  </div>
+  <div class="card p-card-bars" data-a="card" data-in="11.4">
+    <div class="hd"><div class="dots"><i></i><i></i><i></i></div><b>[Card title from the product]</b><span class="tag">[TOTAL]</span></div>
+    <div class="row"><div class="nm">[Item A]</div><div class="ct" data-count="[412]" data-cin="12.2">0</div><div class="tr"><div class="fl" data-bar="1" data-bin="12.2"></div></div></div>
+    <div class="row"><div class="nm">[Item B]</div><div class="ct" data-count="[91]" data-cin="12.5">0</div><div class="tr"><div class="fl" data-bar="0.22" data-bin="12.5"></div></div></div>
+    <div class="row" style="border:0"><div class="nm">[Item C]</div><div class="ct" data-count="[37]" data-cin="12.8">0</div><div class="tr"><div class="fl" data-bar="0.09" data-bin="12.8"></div></div></div>
+  </div>
+  <div class="chip p-chipA" data-a="pop" data-in="14.6"><div class="v" style="color:#b45309">[449]</div><div class="l">[stat label]<br>[second line]</div></div>
+  <div class="chip p-chipB" data-a="pop" data-in="15.0"><div class="v acc">[22]</div><div class="l">[stat label]<br>[second line]</div></div>
+</section>
+
+<!-- s4 FEATURE: a real SVG (mermaid/graph export) drawn node by node while the camera pans -->
+<section class="scene light" id="s4">
+  <div class="left">
+    <div class="eyebrow" data-a="rise" data-in="18.6">[FEATURE NAME]</div>
+    <div class="h" data-a="rise" data-in="18.8">[Every thing.]<br><span class="acc">[Drawn out.]</span></div>
+    <div class="sub" data-a="rise" data-in="19.2">[One plain-English line.]</div>
+  </div>
+  <div class="card p-card-diag" data-a="card" data-in="19.3">
+    <div class="hd"><div class="dots"><i></i><i></i><i></i></div><b>[Diagram title]</b><span class="tag">[TAG]</span></div>
+    <div class="svgwrap" id="diagWrap"></div>
+  </div>
+  <div class="chip p-chipDiag" data-a="pop" data-in="23.2"><div class="v acc">[22]</div><div class="l">[callout on a<br>specific node]</div></div>
+</section>
+
+<!-- s5 CINEMATIC: 3D-tilted browser window panning over a tall REAL screenshot -->
+<section class="scene dark" id="s5">
+  <div class="persp"><div class="win" id="awin"><div class="bar"><div class="dots"><i></i><i></i><i></i></div><div class="addr">🔒 [Example account · Report]</div></div><div class="vp"><img id="aimg" src="assets/[report.png]"></div></div></div>
+  <div class="big p-winhead" data-a="rise" data-in="28.4">[The full report.]<br class="br-v"> <span class="grad">[Every finding explained.]</span></div>
+  <div class="big muted-line p-winsub" data-a="fade" data-in="28.9">[Where it is. Why it matters. How to fix it.]</div>
+  <div class="dchip p-d1" data-a="left" data-in="30.4"><b>[WHERE]</b>[Generic truth about every item]</div>
+  <div class="dchip p-d2" data-a="left" data-in="31.6"><b>[FIX]</b>[Generic truth about every item]</div>
+  <div class="dchip p-d3" data-a="left" data-in="32.8"><b>[OPEN ↗]</b>[Generic truth about every item]</div>
+</section>
+
+<!-- s6 END CARD -->
+<section class="scene dark" id="s6" style="--glow:rgba(99,102,241,.38)">
+  <div class="logo p-endlogo" data-a="pop" data-in="36.4"><div class="tile"><svg viewBox="0 0 24 24" fill="#fff"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></svg></div><div class="word">[Product] <span>[AI]</span></div></div>
+  <div class="big p-endtag" data-a="rise" data-in="37.0">[Your whole account.]<br><span class="grad">[One clear report.]</span></div>
+  <div class="url p-endurl" data-a="pop" data-in="38.0">[product.com]</div>
+</section>
+
+<svg id="cursor" viewBox="0 0 24 24"><path d="M3 2l7.5 19 2.6-7.6L21 10.8z" fill="#fff" stroke="#14213d" stroke-width="1.6" stroke-linejoin="round"/></svg>
+<div class="ripple" id="ripple"></div>
+</div>
+<script>
+const DURATION = 42;
+// Scene start times. Each scene fades IN over the previous one (which stays solid underneath), so light->light
+// cuts never dip to gray. A scene stays mounted until the next one has fully faded in.
+const SCENES = { s1:0, s2:6.0, s3:10.2, s4:18.2, s5:27.8, s6:36.0 };
+const FADE = 0.45;
+const PORTRAIT = innerHeight > innerWidth;
+
+const clamp=(v,a=0,b=1)=>Math.min(b,Math.max(a,v));
+const P=(t,a,b)=>clamp((t-a)/(b-a));                    // progress of t through [a,b]
+const out3=x=>1-Math.pow(1-x,3);
+const io=x=>x<.5?4*x*x*x:1-Math.pow(-2*x+2,3)/2;
+const back=x=>{const c1=1.6,c3=c1+1;return 1+c3*Math.pow(x-1,3)+c1*Math.pow(x-1,2)};
+const $=s=>document.querySelector(s);
+const fmt=n=>Math.round(n).toLocaleString('en-US');
+
+// ---- hook background cards: use REAL item names from the product
+const ITEMS=[['⚙️','[Real item name]','[status]'],['📨','[Real item name]','[status]'],['⚙️','[Real item name]','[status]'],['⏸️','[Real item name]','[status]'],['⚙️','[Real item name]','[status]'],['📝','[Real item name]','[status]'],['⚙️','[Real item name]','[status]'],['💬','[Real item name]','[status]']];
+const POS_L=[[80,90,-4],[560,60,3],[1080,110,-2],[1480,70,4],[60,820,3],[520,880,-3],[1000,860,2],[1480,830,-4]];
+const POS_P=[[-60,230,-4],[560,300,3],[-40,470,-2],[600,560,4],[-80,1330,3],[580,1420,-3],[-30,1600,2],[560,1690,-4]];
+ITEMS.forEach((w,i)=>{const d=document.createElement('div');d.className='fcard';d.innerHTML=`<div class="ic">${w[0]}</div><div><div class="k">[KIND]</div><div class="n">${w[1]}</div><div class="s">${w[2]}</div></div>`;$('#fcards').appendChild(d);d._p=(PORTRAIT?POS_P:POS_L)[i];});
+
+// ---- SVG reveal helper: works on mermaid exports (g.nodes > g, g.edgePaths > path, g.edgeLabels > g)
+// and, with a custom selector list, on any SVG whose parts you want to appear in order.
+async function loadSvg(url, wrap){ wrap.innerHTML = await (await fetch(url)).text(); return wrap.querySelector('svg'); }
+function prepReveal(svg){
+  const items=[];
+  const add=(el,kind)=>{const b=el.getBBox(); const m=el.transform?.baseVal?.consolidate()?.matrix; items.push({el,kind,x:b.x+(m?.e||0),y:b.y+(m?.f||0),w:b.width,h:b.height});};
+  svg.querySelectorAll('g.nodes > g').forEach(n=>add(n,'node'));
+  svg.querySelectorAll('g.edgePaths > path').forEach(p=>{add(p,'edge'); p._L=p.getTotalLength(); p.style.strokeDasharray=p._L; p._m=p.getAttribute('marker-end');});
+  svg.querySelectorAll('g.edgeLabels > g').forEach(n=>add(n,'label'));
+  return items;
+}
+// Draw an item at progress k: edges stroke on, arrowheads appear only once the line lands, nodes fade in.
+function show(it,k){
+  if(it.kind==='edge'){ it.el.style.strokeDashoffset=it.el._L*(1-k); it.el.style.opacity=k>0?1:0;
+    if(it.el._m){ if(k>=0.97) it.el.setAttribute('marker-end',it.el._m); else it.el.removeAttribute('marker-end'); } }
+  else it.el.style.opacity=k;
+}
+
+let diag, diagItems;
+async function init(){
+  try { diag = await loadSvg('assets/[diagram.svg]', $('#diagWrap')); diagItems = prepReveal(diag); } catch(e) { console.warn('no diagram', e); }
+  await document.fonts.ready;
+  window.__ready = true;
+}
+
+// ---- declarative entrances: data-a="rise|left|pop|card|fade" data-in="<s>" [data-out="<s>"]
+function fx(el,t){
+  const a=el.dataset.a, tin=+el.dataset.in, tout=el.dataset.out?+el.dataset.out:null;
+  let k=out3(P(t,tin,tin+0.7)), o=k, tr='';
+  if(a==='rise') tr=`translateY(${(1-k)*40}px)`;
+  if(a==='left') tr=`translateX(${(1-k)*-60}px)`;
+  if(a==='pop'){ o=P(t,tin,tin+0.3); tr=`scale(${0.6+0.4*back(P(t,tin,tin+0.6))})`; }
+  if(a==='card') tr=`translateY(${(1-k)*80}px) scale(${0.96+0.04*k})`;
+  if(tout!=null){ const ko=P(t,tout,tout+0.4); o*=1-ko; tr+=` translateY(${-ko*30}px)`; }
+  if(el.classList.contains('logo')||el.classList.contains('url')) tr='translateX(-50%) '+tr;
+  el.style.opacity=o; el.style.transform=tr;
+}
+
+function seek(t){
+  const ids=Object.keys(SCENES);
+  ids.forEach((id,i)=>{ const el=document.getElementById(id), a=SCENES[id], next=ids[i+1]?SCENES[ids[i+1]]:Infinity;
+    el.style.display = (t>=a && t<next+FADE) ? 'block' : 'none'; el.style.opacity = i===0 ? 1 : io(P(t,a,a+FADE)); });
+  document.querySelectorAll('[data-a]').forEach(e=>fx(e,t));
+  document.querySelectorAll('[data-count]').forEach(e=>{ e.textContent=fmt(+e.dataset.count*out3(P(t,+e.dataset.cin,+e.dataset.cin+1.4))); });
+  document.querySelectorAll('[data-bar]').forEach(e=>{ e.style.width=(+e.dataset.bar*100*io(P(t,+e.dataset.bin,+e.dataset.bin+1.4)))+'%'; });
+
+  // s1: drifting blurred cards + hook counter
+  document.querySelectorAll('.fcard').forEach((d,i)=>{ const [x,y,r]=d._p; const dx=Math.sin(t*.35+i)*14, dy=Math.cos(t*.3+i*1.7)*12-t*6;
+    d.style.transform=`translate(${x+dx}px,${y+dy}px) rotate(${r}deg)`; d.style.opacity=.55*P(t,0,1.2)*(1-.5*P(t,3,4)); });
+  $('#hookNum').textContent=fmt([449]*out3(P(t,3.3,4.6)));
+
+  // s4: scale the SVG to the card, reveal top-to-bottom, pan the camera down
+  if(diag){
+    const wrap=$('#diagWrap'), W=wrap.clientWidth, VH=wrap.clientHeight;
+    const vb=diag.viewBox.baseVal, sc=Math.min(1.6,(W-80)/vb.width), vw=vb.width*sc, vh=vb.height*sc;
+    const t0=19.8, t1=25.5, pan=io(P(t,21.0,27.0));
+    const oy = vh>VH ? -pan*(vh-VH+60)+24 : (VH-vh)/2;
+    diag.setAttribute('width',vb.width); diag.setAttribute('height',vb.height);
+    diag.style.transform=`translate(${(W-vw)/2}px,${oy}px) scale(${sc})`;
+    diagItems.forEach(it=>{ const st=t0+(it.y/vb.height)*(t1-t0); show(it,P(t,st,st+0.5)); });
+  }
+
+  // s5: 3D window slides in, tilt flattens while the screenshot scrolls
+  { const k=out3(P(t,27.8,29.2)), pan=io(P(t,29.0,35.8));
+    $('#awin').style.transform=`translateY(${(1-k)*160}px) rotateX(${14-4*pan}deg) scale(${0.94+0.04*k})`;
+    $('#aimg').style.transform=`translateY(${-pan*[2350]}px)`; }  // pan distance in px: stop on an interesting part, not a boring list
+}
+// ---- cursor: glides to REAL elements (measured every frame, so it follows pans/scales in both orientations) and clicks.
+// Make every click CAUSE something visible ~0.1-0.3s later (a reveal, highlight, the bars filling), never click empty space,
+// and never click an element before it has appeared. 2-4 click moments per video is plenty.
+const CURSOR = [
+  { show:11.3, hide:13.4, from:[0.92,0.95], moves:[{ t0:11.3, t1:11.8, sel:'#s3 .row', dx:0.1, click:11.9 }] },  // click -> bars fill at 12.2
+];
+window.CURSOR = CURSOR;
+// Sounds the automatic rules in scripts/cues.mjs can't infer: JS-driven counters, typing, big landings.
+window.SFX_EXTRA = [
+  { t:3.2, s:'thud', g:-6 },                                                             // hook headline lands
+  ...Array.from({length:8},(_,i)=>({ t:3.3+1.2*Math.pow(i/8,1.6), s:'tick', g:-7 })),   // hook number counting up
+];
+function tgt(sel,dx=0,dy=0){ const el=document.querySelector(sel); if(!el) return null; const r=el.getBoundingClientRect(); return [r.left+r.width*(0.5+dx), r.top+r.height*(0.5+dy)]; }
+function cursorSeek(t){
+  const c=document.getElementById('cursor'), rp=document.getElementById('ripple'), W=innerWidth, H=innerHeight;
+  c.style.opacity=0; rp.style.opacity=0;
+  for(const s of CURSOR){
+    if(t<s.show-0.01 || t>s.hide+0.3) continue;
+    let pos=[s.from[0]*W, s.from[1]*H];
+    for(const m of s.moves){ const p=tgt(m.sel,m.dx||0,m.dy||0); if(!p) continue;
+      if(t>=m.t0){ const k=io(P(t,m.t0,m.t1)); pos=[pos[0]+(p[0]-pos[0])*k, pos[1]+(p[1]-pos[1])*k]; } }
+    let sc=1, clickAt=null;
+    for(const m of s.moves) if(m.click!=null && t>=m.click-0.1 && t<=m.click+0.5) clickAt=m.click;
+    if(clickAt!=null){ sc = t<clickAt ? 1-0.15*P(t,clickAt-0.1,clickAt) : 0.85+0.15*P(t,clickAt,clickAt+0.12);
+      if(t>=clickAt){ const k=P(t,clickAt,clickAt+0.45); rp.style.opacity=(1-k)*0.9; rp.style.transform=`translate(${pos[0]}px,${pos[1]}px) scale(${0.2+0.9*out3(k)})`; } }
+    c.style.opacity=P(t,s.show,s.show+0.25)*(1-P(t,s.hide,s.hide+0.3));
+    c.style.transform=`translate(${pos[0]-4}px,${pos[1]-4}px) scale(${sc*(H>W?1.25:1)})`;
+  }
+}
+// Keep a reference to the frame function BEFORE replacing window.seek: a top-level function declaration IS window.seek,
+// so wrapping it as window.seek=t=>{seek(t);...} would recurse forever.
+const __drawFrame=seek; window.seek=t=>{ __drawFrame(t); cursorSeek(t); };
+window.DURATION=DURATION;
+init().then(()=>{ const u=new URLSearchParams(location.search);
+  if(u.has('t')) window.seek(+u.get('t'));
+  else { const s=performance.now(); const loop=()=>{ window.seek(((performance.now()-s)/1000)%DURATION); requestAnimationFrame(loop); }; loop(); } });
+</script>
+</body></html>
